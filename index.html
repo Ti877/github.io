@@ -1,0 +1,445 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<link rel="icon" href="favicon.ico" mce_href="favicon.ico" type="image/x-icon">
+	<link rel="shortcut icon" href="favicon.ico" mce_href="favicon.ico" type="image/x-icon">
+  <title> TIKOO PIXEL WORLD </Title>
+
+  <!-- people say i need this line -->
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description"
+    content="Create a Brick Mosaic! Download Instructions! Make the Mosaic! Treasure the Mosaic! Disassemble it, and make something entirely different!">
+
+ 
+
+  <link rel="stylesheet" href="css/main.css">
+
+<!-- glfx.js (forked) - 原始仓库: https://github.com/evanw/glfx.js - MIT License -->
+<script type='text/javascript' src='js/glfx.min.js'></script>
+<!-- jsPDF - https://github.com/parallax/jsPDF - MIT License -->
+<script type='text/javascript' src='js/jspdf.umd.min.js'></script>
+<!-- croppr.js - https://github.com/jamesssooi/Croppr.js - MIT License -->
+
+  <!-- croppr lets us crop those DISGUSTING images that have NON-SQUARE aspect ratios -->
+  <script src="js/croppr.min.js"></script>
+  <link rel="stylesheet" href="css/croppr.min.css" />
+
+  <!-- this is where the fun stuff lives -->
+  <script type='text/javascript' src='js/instructionMaker.js'></script>
+  <script type='text/javascript' src='js/RGBtoLAB.js'></script>
+  <script type='text/javascript' src='js/brickMosaicMaker.js'></script>
+</head>
+
+<body>
+  <div id="header" class="legoFont" onclick="window.location.reload()">
+    <h1> TIKOO Pixel World </h1>
+  </div>
+
+  <div class="content col">
+    <noscript>
+      <b class="errText">
+        You don't have Javascript enabled. Unfortunately, this website requires Javascript to run!
+        <br>
+        <br>
+        We don't collect data, run a crypto miner, or do anything else of the sort - we don't even run the hosting
+        server (thanks Github!).
+        <br>
+        You can feel safe turning it on for this site. If you don't trust me, check out the code on Github!</a>
+        <br>
+        <br>
+        Otherwise, thank you for checking us out! We appreciate it - Axel & Jeremy
+      </b>
+    </noscript>
+
+    <b class="errText" id="errTextBox" hidden> </b>
+
+    <!-- Satan's Modal of Satanity -->
+    <div id="cropperModal" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content">
+        <img id="cropperImg"></img>
+        <div class="row withspace">
+          <span class="modal-cancel" id=modal-cancel>Cancel</span>
+          <span class="modal-close" id=modal-close>Done</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="secondaryContent" id="initialMessage">
+      Hello, World!
+      <br>
+      Try uploading an image of an album cover you like.
+    </h3>
+
+    <label for="albumArtIn" id="uploadImgBtn">
+      <input type="file" id="albumArtIn" accept="image/*">
+      Upload Image
+    </label>
+
+    <form id="urlSubmission" class="row" >
+      <input type="url" id="albumArtURL" list="defaultURLs" pattern="" required  style="display: none">
+      <input type="submit" id="albumArtURLBtn" value="Submit URL"  style="display: none">
+    </form> 
+
+
+    <p class="secondaryContent" role="button" tabIndex="0" aria-label="Just try an example" id="example"  style="display: none">
+      
+    </p>
+
+    <div id="informationText" class="secondaryContent boxbox">
+      <h4> What is this? </h4>
+      <p>
+        This is a website to help you make a Lego mosaic from an image, such as album covers.
+      </p>
+
+      <h4> How do I use it? </h4>
+      <p>
+        Upload a square image (same width and height), play with the settings until it looks good to you.
+      </p>
+
+      <h4> Which photos work best? </h4>
+        <p>· Large-Scale Subject: Prioritize close-ups or headshots to ensure core details occupy sufficient pixel space.</p>
+        <p>· High-Purity Background: Opt for a simple, uncluttered background composition to avoid visual noise caused by messy elements after pixelation.</p>
+        <p>· High-Contrast Tones: Use images with strong contrast and high saturation, and enhance the sense of outline through light, shadow and color blocks.</p>
+    </div>
+
+    <!-- hidden before an image is chosen -->
+    <div id="hideableContent" style="display: none">
+
+      <!-- Some nice looking images -->
+      <div id="imgdiv">
+        <canvas id="outcvs" class="displayCanvas">
+          Sorry, your browser does not support "canvas" elements - this is typically because
+          the browser is relatively old, or any one of another million esoteric issues that
+          I am not smart enough to predict. You can try updating your browser...
+        </canvas>
+      </div>
+
+      <div id="inputBox" class="col">
+
+        <div class="rowToCol">
+          <div class="colToRow">
+            <b class="sliderLabel">Saturation</b>
+            <input class="slider" type="range" min=-0.5 max=0.5 value=0 step=0.01 id="saturation">
+          </div>
+
+          <div class="colToRow">
+            <b class="sliderLabel">Brightness</b>
+            <input class="slider" type="range" min=-0.5 max=0.5 value=0 step=0.01 id="brightness">
+          </div>
+
+          <div class="colToRow">
+            <b class="sliderLabel">Contrast</b>
+            <input class="slider" type="range" min=-0.5 max=0.5 value=0 step=0.01 id="contrast">
+          </div>
+
+          <div class="colToRow">
+            <b id="sizeLabel" class="sliderLabel">Size: 48 by 48</b>
+            <input class="slider" type="range" min=1 max=4 value=3 step=1 id="size">
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="rowToCol">
+
+          <div class="nonSliderInputs col withspace">
+            <div class="centre">
+              <input type="text" id="albumName" placeholder="Title">
+            </div>
+            <div class="centre">
+              <input type="submit" id="resetBtn" value="Reset">
+            </div>
+          </div>
+
+          <div class="nonSliderInputs col withspace">
+            <div class="centre">
+              <div id="generatePDFBtn" class="col" role="button" tabIndex="0" aria-label="Generate Instructions">
+                <span id="downloadTheWord">Download</span>
+                <span id="anotherWord">Instructions</span>
+              </div>
+            </div>
+            <div class="centre">
+              <div id="downloadMosaicBtn" class="col" role="button" tabIndex="0" aria-label="Generate Instructions">
+                <span id="downloadTheWord">Download</span>
+                <span id="anotherWord">Mosaic</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <footer id="footer">
+      <div id="footerText">
+	   
+       <p>This custom pixel mosaic tool is made just for you. 
+	   <br>your favorite moments into a unique brick art to match your stunning jewelry looks.</p>
+	   <br>
+	   <p class="logo-imgBox"><img src="images/logo.png"/></p>
+      </div>
+
+    </footer>
+  </div>
+
+</body>
+
+<script type="text/javascript">
+  'use strict'
+
+  const fileSelection = document.getElementById("albumArtIn")
+  const urlSelection = document.getElementById("albumArtURL")
+  const urlSelectionBtn = document.getElementById("albumArtURLBtn")
+  const urlSubmission = document.getElementById("urlSubmission")
+  const example = document.getElementById("example")
+  const imgdiv = document.getElementById("imgdiv")
+  const albumName = document.getElementById("albumName")
+  const resetButton = document.getElementById("resetBtn")
+  const sizeSlider = document.getElementById("size")
+  const satSlider = document.getElementById("saturation")
+  const brightSlider = document.getElementById("brightness")
+  const contrastSlider = document.getElementById("contrast")
+  const sizeLabel = document.getElementById("sizeLabel")
+  const generatePDFBtn = document.getElementById("generatePDFBtn")
+  const downloadMosaicBtn = document.getElementById("downloadMosaicBtn")
+  const errTextBox = document.getElementById("errTextBox")
+  const modalCloseBtn = document.getElementById("modal-close")
+  const modalCancelBtn = document.getElementById("modal-cancel")
+
+  const runExample = () => handleURL(
+    ""
+  )
+  example.onclick = runExample
+  example.onkeydown = e => keyPressToClick(e, runExample)
+  fileSelection.onchange = e => handleFile(e.target.files[0])
+  urlSubmission.onsubmit = e => {
+    e.preventDefault()
+    handleURL(urlSelection.value)
+  }
+  albumName.oninput = e => handleTextBox(e)
+  resetButton.onclick = reset
+  resetButton.onkeydown = e => keyPressToClick(e, reset)
+  sizeSlider.oninput = updateSize
+  satSlider.oninput = brickify
+  brightSlider.oninput = brickify
+  contrastSlider.oninput = brickify
+  generatePDFBtn.onclick = genInstructions
+  generatePDFBtn.onkeydown = e => keyPressToClick(e, genInstructions)
+  downloadMosaicBtn.onclick = downloadMosaic
+
+  let fxcanvas
+  try { fxcanvas = fx.canvas() } catch (e) {
+    alert("Sorry, your browser does not support WebGL. Unfortunately, this website requires it to run.")
+  }
+  fxcanvas.id = "incvs"
+  fxcanvas.className = "displayCanvas"
+
+  const output_canvas = document.getElementById("outcvs")
+  const out_ctx = output_canvas.getContext('2d')
+
+  let L;
+  let input_texture;
+  let album_art_img;
+
+  function keyPressToClick(e, cb, args) {
+    // 13 is enter, 32 is space (commonly used by assisted reader devices)
+    if (e.keyCode === 13 || e.keyCode === 32) {
+      cb(args)
+    }
+  }
+
+  function handleURL(url) {
+    hideError()
+    const errMsg = "Could not load image from your URL - make sure that the link is to JUST an image, and nothing else. This can be finicky!\n\nIf it is still not working, I suggest downloading the image, and then using the 'Upload Image' button below."
+
+    fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'default',
+      credentials: 'same-origin',
+      redirect: 'follow',
+      referrer: 'no-referrer',
+    })
+      .then(response => {
+        if (response.ok) {
+          return response.blob()
+        } else {
+          showError(errMsg)
+        }
+      })
+      .then(blob => handleFile(blob))
+      .catch(error => {
+        showError(errMsg)
+      })
+  }
+
+  function createBrickificator(img) {
+    input_texture = fxcanvas.texture(img)
+
+    // either this, or EXT_color_buffer_float
+    input_texture._.gl.getExtension('WEBGL_color_buffer_float')
+
+    L = new Brickificator(input_texture, parseInt(sizeSlider.value))
+    reset()
+
+    imgdiv.prepend(fxcanvas)
+  }
+
+  function handleFile(file) {
+    album_art_img = new Image
+    const album_art_url = URL.createObjectURL(file)
+
+    album_art_img.onload = () => {
+      if (imgRequiresResize(album_art_img)) {
+        cropperModal.style.display = "block"
+        const cropImg = document.getElementById("cropperImg")
+
+        cropImg.onload = () => {
+          const cropper = new Croppr(cropImg, {
+            aspectRatio: 1,
+            minSize: [64, 64, 'px'],
+          })
+
+          modalCancelBtn.onclick = () => {
+            cropperModal.style.display = "none"
+            cropper.destroy()
+            cropImg.removeAttribute('src')
+          }
+
+          modalCloseBtn.onclick = () => {
+            // let onload loop back around - album_art_img.src should be correctly cropped now
+            // wouldn't be cool if there wasn't recursion ;)
+            const cropBoxData = cropper.getValue()
+            cropperModal.style.display = "none"
+            cropper.destroy()
+            cropImg.removeAttribute('src')
+            album_art_img.src = cropImage(album_art_img, cropBoxData)
+          }
+        }
+        cropImg.src = album_art_url
+      } else {
+        hideError()
+        showContents()
+        createBrickificator(album_art_img)
+      }
+    }
+
+    album_art_img.src = album_art_url
+  }
+
+  function cropImage(img, data) {
+    const cv = document.createElement('canvas')
+    const ctx = cv.getContext('2d')
+    // our cropping library rounds floats for width and height which leads
+    // to cases where data['width'] = data['height'] +/- 1. Just choose the
+    // minimum dimension for this case. 1px diff shouldn't matter.
+    const cropDim = Math.min(data['width'], data['height'])
+    cv.width = cropDim
+    cv.height = cropDim
+    ctx.drawImage(img, data['x'], data['y'], cropDim, cropDim, 0, 0, cropDim, cropDim)
+    return cv.toDataURL("image/png")
+  }
+
+  function reset() {
+    sizeSlider.value = 3
+    contrastSlider.value = 0
+    brightSlider.value = 0
+    satSlider.value = 0
+    albumName.value = ""
+    albumArtURL.value = ""
+
+    updateSize()
+
+    if (L) {
+      input_texture.loadContentsOf(album_art_img)
+      fxcanvas.draw(input_texture).update()
+      L.updateSize(parseInt(sizeSlider.value))
+      L.commenceBrickification(out_ctx)
+    }
+  }
+
+  function brickify() {
+    if (L) {
+      input_texture.loadContentsOf(album_art_img)
+      fxcanvas.draw(input_texture)
+        .hueSaturation(0, satSlider.value)
+        .brightnessContrast(brightSlider.value, contrastSlider.value)
+        .update()
+
+      L.updateSize(parseInt(sizeSlider.value))
+      L.commenceBrickification(out_ctx)
+    }
+  }
+
+  function downloadMosaic() {
+    const mosaicURL = output_canvas.toDataURL('image/png')
+    const alink = document.createElement('a')
+    const fileName = (albumName.value || 'mosaic') + '.png'
+    alink.href = mosaicURL
+    alink.download = fileName
+    alink.click()
+  }
+
+  function genInstructions() {
+    if (L) {
+      L.makeMosaicInstructions(albumName.value)
+    }
+  }
+
+  function updateSize() {
+    sizeLabel.innerHTML = `Size: ${16 * sizeSlider.value} by ${16 * sizeSlider.value}`
+    brickify()
+  }
+
+  function imgRequiresResize(img) {
+    const minDim = 64
+    const unevenAspectRatio = img.width != img.height
+    const tooSmall = img.width < minDim || img.height < minDim
+    return tooSmall || unevenAspectRatio
+  }
+
+  function showContents() {
+    // gotta be flex, or else the styling just falls apart
+    document.getElementById("hideableContent").style.display = "block"
+    const secondaryElements = document.getElementsByClassName("secondaryContent")
+    Array.from(secondaryElements).forEach(el => {
+      el.style.display = "none"
+    })
+  }
+
+  function hideContents() {
+    document.getElementById("hideableContent").style.display = "none"
+    const secondaryElements = document.getElementsByClassName("secondaryContent")
+    Array.from(secondaryElements).forEach(el => {
+      el.style.display = "block"
+    })
+  }
+
+  function showError(msg) {
+    errTextBox.innerText = msg
+    errTextBox.style.display = "block"
+  }
+
+  function hideError() {
+    errTextBox.innerText = ""
+    errTextBox.style.display = "none"
+  }
+
+  function handleTextBox(e) {
+    if (e.target.value == "makeitdark") {
+      albumName.value = ""
+      albumName.classList.add("dark-mode")
+      document.body.classList.add("dark-mode")
+    } else if (e.target.value == "makeitlight") {
+      albumName.value = ""
+      albumName.classList.remove("dark-mode")
+      document.body.classList.remove("dark-mode")
+    }
+  }
+</script>
+
+</html>
